@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>JobFinder | Specialist Job Referral Platform</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <!-- Google Font: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              900: '#1e3a8a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #030712;
+      color: #f3f4f6;
+    }
+    .glass-nav {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #0b0f19;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased bg-slate-950 text-slate-100 selection:bg-blue-600 selection:text-white">
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <header class="border-b border-slate-800/80 glass-nav sticky top-0 z-40 shadow-xl">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center space-x-3 cursor-pointer group" onclick="switchTab('jobs')">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-cyan-500 flex items-center justify-center font-black text-xl text-white shadow-lg shadow-blue-500/25 group-hover:scale-105 transition-transform duration-200">
+          <i class="fa-solid fa-magnifying-glass-dollar"></i>
+        </div>
+        <div>
+          <span class="text-xl font-black tracking-tight bg-gradient-to-r from-white via-slate-100 to-blue-300 bg-clip-text text-transparent">
+            Job<span class="text-blue-500">Finder</span>
+          </span>
+          <span class="block text-[10px] font-bold text-slate-400 tracking-widest uppercase -mt-1">Referral Hub</span>
+        </div>
+      </div>
+
+      <!-- Desktop Navigation Tabs -->
+      <nav class="hidden md:flex items-center space-x-1.5 bg-slate-900/90 p-1.5 rounded-xl border border-slate-800">
+        <button onclick="switchTab('jobs')" id="nav-jobs" class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-blue-600 text-white shadow-md">
+          <i class="fa-solid fa-briefcase mr-1.5"></i> Opportunities
+        </button>
+        <button onclick="switchTab('referrals')" id="nav-referrals" class="px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200">
+          <i class="fa-solid fa-chart-line mr-1.5"></i> My Referrals
+        </button>
+        <button onclick="switchTab('admin')" id="nav-admin" class="px-4 py-1.5 rounded-lg text-xs font-semibold text-amber-400 border border-amber-500/30 hover:bg-amber-500/10 transition-all duration-200">
+          <i class="fa-solid fa-user-shield mr-1.5"></i> Admin Control
+        </button>
+      </nav>
+
+      <!-- Auth & User Info -->
+      <div class="flex items-center gap-3">
+        <div id="auth-status-card" class="flex items-center gap-2.5 bg-slate-900/90 border border-slate-800 rounded-xl px-3 py-1.5">
+          <div class="w-7 h-7 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center justify-center font-bold text-xs" id="user-avatar-initials">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+          </div>
+          <div class="text-left hidden sm:block">
+            <p class="text-xs font-bold text-white leading-tight" id="user-display-id">Connecting...</p>
+            <p class="text-[10px] text-emerald-400 font-medium" id="user-display-status">
+              <span class="w-1.5 h-1.5 inline-block bg-emerald-400 rounded-full mr-1 animate-pulse"></span>Firestore Sync
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Mobile Navigation Bar -->
+  <div class="md:hidden fixed bottom-0 left-0 right-0 border-t border-slate-800 glass-nav z-40 flex justify-around p-2">
+    <button onclick="switchTab('jobs')" id="mob-nav-jobs" class="flex flex-col items-center p-1 text-xs text-blue-400 font-bold">
+      <i class="fa-solid fa-briefcase text-base mb-0.5"></i>
+      <span>Jobs</span>
+    </button>
+    <button onclick="switchTab('referrals')" id="mob-nav-referrals" class="flex flex-col items-center p-1 text-xs text-slate-400 font-medium">
+      <i class="fa-solid fa-chart-line text-base mb-0.5"></i>
+      <span>Referrals</span>
+    </button>
+    <button onclick="switchTab('admin')" id="mob-nav-admin" class="flex flex-col items-center p-1 text-xs text-amber-400 font-medium">
+      <i class="fa-solid fa-user-shield text-base mb-0.5"></i>
+      <span>Admin</span>
+    </button>
+  </div>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full pb-24 md:pb-8">
+
+    <!-- TAB 1: JOB BOARD / OPPORTUNITIES -->
+    <section id="tab-jobs" class="space-y-6">
+      
+      <!-- Hero Banner -->
+      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 border border-blue-500/20 p-6 sm:p-8 shadow-2xl">
+        <div class="absolute -right-12 -bottom-12 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="relative z-10 max-w-2xl">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-500/10 border border-blue-400/30 text-blue-300 text-xs font-semibold rounded-full mb-3">
+            <i class="fa-solid fa-circle-dollar-to-slot text-blue-400"></i> JobFinder Verified Referral Rewards
+          </span>
+          <h1 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mb-3">
+            Refer Top Talent. <br class="hidden sm:block"/>
+            <span class="bg-gradient-to-r from-blue-400 via-indigo-300 to-emerald-400 bg-clip-text text-transparent">
+              Earn Cash Bonuses per Successful Hire.
+            </span>
+          </h1>
+          <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
+            Discover active specialist job listings. Copy your unique referral tracking link or introduce talent directly to earn reward payouts upon candidate hire.
+          </p>
+        </div>
+      </div>
+
+      <!-- Search & Filters Toolbar -->
+      <div class="flex flex-col sm:flex-row gap-3 justify-between items-center bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+        <div class="relative w-full sm:w-80">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-500 text-xs"></i>
+          <input type="text" id="job-search" oninput="filterAndRenderJobs()" placeholder="Search roles, skills, or departments..." class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition">
+        </div>
+        
+        <div class="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+          <select id="department-filter" onchange="filterAndRenderJobs()" class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-blue-500">
+            <option value="ALL">All Departments</option>
+            <option value="AI & Machine Learning">AI & ML</option>
+            <option value="Software Engineering">Software Engineering</option>
+            <option value="Medical & Science NLP">Medical NLP</option>
+            <option value="FinTech">FinTech</option>
+            <option value="Product & Design">Product & Design</option>
+          </select>
+          <span class="text-xs text-slate-400 font-medium whitespace-nowrap" id="active-jobs-count">0 Open Roles</span>
+        </div>
+      </div>
+
+      <!-- Jobs Grid -->
+      <div id="jobs-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div class="col-span-full py-16 text-center">
+          <i class="fa-solid fa-circle-notch fa-spin text-2xl text-blue-500 mb-2"></i>
+          <p class="text-xs text-slate-400">Loading JobFinder opportunities from Firestore...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: MY REFERRALS DASHBOARD -->
+    <section id="tab-referrals" class="hidden space-y-6">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900/60 p-5 rounded-2xl border border-slate-800">
+        <div>
+          <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            My Referral Tracking Dashboard
+            <span class="text-xs bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2.5 py-0.5 rounded-full" id="user-ref-code-badge">REF-ID</span>
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">Real-time candidate pipeline stages and reward balance status.</p>
+        </div>
+
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <button onclick="copyMainReferralLink()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition shadow-md flex items-center justify-center gap-1.5 w-full sm:w-auto">
+            <i class="fa-solid fa-link"></i> Copy Main Platform Link
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Metrics Grid -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 shadow-sm relative overflow-hidden">
+          <div class="absolute top-3 right-3 text-emerald-500/20 text-2xl"><i class="fa-solid fa-sack-dollar"></i></div>
+          <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Earned</p>
+          <p class="text-2xl font-extrabold text-emerald-400 mt-1" id="metric-earned">$0</p>
+          <p class="text-[10px] text-slate-500 mt-1">Paid Out Bonuses</p>
+        </div>
+
+        <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 shadow-sm relative overflow-hidden">
+          <div class="absolute top-3 right-3 text-amber-500/20 text-2xl"><i class="fa-solid fa-clock-rotate-left"></i></div>
+          <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Pending Payouts</p>
+          <p class="text-2xl font-extrabold text-amber-400 mt-1" id="metric-pending">$0</p>
+          <p class="text-[10px] text-slate-500 mt-1">In Candidate Pipeline</p>
+        </div>
+
+        <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 shadow-sm relative overflow-hidden">
+          <div class="absolute top-3 right-3 text-blue-500/20 text-2xl"><i class="fa-solid fa-user-group"></i></div>
+          <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Candidates Referred</p>
+          <p class="text-2xl font-extrabold text-blue-400 mt-1" id="metric-candidates">0</p>
+          <p class="text-[10px] text-slate-500 mt-1">Total Submissions</p>
+        </div>
+
+        <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 shadow-sm relative overflow-hidden">
+          <div class="absolute top-3 right-3 text-indigo-500/20 text-2xl"><i class="fa-solid fa-award"></i></div>
+          <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Placements Made</p>
+          <p class="text-2xl font-extrabold text-indigo-400 mt-1" id="metric-placements">0</p>
+          <p class="text-[10px] text-slate-500 mt-1">Hired Candidates</p>
+        </div>
+      </div>
+
+      <!-- Candidate Pipeline Table -->
+      <div class="bg-slate-900/90 rounded-xl border border-slate-800 overflow-hidden shadow-xl">
+        <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900">
+          <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <i class="fa-solid fa-list-check text-blue-400"></i> My Candidate Pipeline
+          </h3>
+          <span class="text-[11px] text-slate-400" id="referrals-count-indicator">0 records</span>
+        </div>
+
+        <div class="overflow-x-auto custom-scrollbar">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-950 text-slate-400 font-semibold uppercase text-[10px] tracking-wider border-b border-slate-800">
+              <tr>
+                <th class="px-4 py-3">Candidate</th>
+                <th class="px-4 py-3">Applied Role</th>
+                <th class="px-4 py-3">Current Stage</th>
+                <th class="px-4 py-3">Referral Reward</th>
+                <th class="px-4 py-3">Payout Status</th>
+                <th class="px-4 py-3">Submission Date</th>
+              </tr>
+            </thead>
+            <tbody id="referrals-table-body" class="divide-y divide-slate-800/60">
+              <tr>
+                <td colspan="6" class="px-4 py-8 text-center text-slate-500">Loading referral candidate tracking data...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: ADMIN CONTROL DASHBOARD -->
+    <section id="tab-admin" class="hidden space-y-6">
+      <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 text-amber-200 text-xs flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-shield-halved text-amber-400 text-base"></i>
+          <span><strong>Admin Console:</strong> Add new roles, delete old openings, or advance candidates to approve payouts directly in Firestore.</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Post New Job Form -->
+        <div class="bg-slate-900/90 p-5 rounded-2xl border border-slate-800 shadow-xl">
+          <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-plus-circle text-amber-400"></i> Post New Job Opportunity
+          </h3>
+
+          <form id="create-job-form" onsubmit="handleJobCreation(event)" class="space-y-3">
+            <div>
+              <label class="block text-[11px] font-medium text-slate-400 mb-1">Job Title *</label>
+              <input type="text" id="admin-job-title" placeholder="e.g. Senior AI Prompt Engineer" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500" required>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[11px] font-medium text-slate-400 mb-1">Department *</label>
+                <select id="admin-job-dept" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-white focus:outline-none focus:border-amber-500" required>
+                  <option value="AI & Machine Learning">AI & ML</option>
+                  <option value="Software Engineering">Software Engineering</option>
+                  <option value="Medical & Science NLP">Medical NLP</option>
+                  <option value="FinTech">FinTech</option>
+                  <option value="Product & Design">Product & Design</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-medium text-slate-400 mb-1">Compensation *</label>
+                <input type="text" id="admin-job-rate" placeholder="e.g. $130 - $180 / hr" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500" required>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-bold text-emerald-400 mb-1">Referral Reward Bonus ($ USD) *</label>
+              <input type="number" id="admin-job-reward" placeholder="2500" class="w-full bg-slate-950 border border-emerald-500/40 rounded-lg px-3 py-2 text-xs text-white font-bold focus:outline-none focus:border-emerald-500" required>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-medium text-slate-400 mb-1">Target Application URL *</label>
+              <input type="url" id="admin-job-url" placeholder="https://jobfinder.com/careers/role-1" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500" required>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-medium text-slate-400 mb-1">Job Description & Skills *</label>
+              <textarea id="admin-job-desc" rows="3" placeholder="Outline specialist candidate requirements..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500" required></textarea>
+            </div>
+
+            <button type="submit" id="admin-submit-btn" class="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg text-xs transition shadow-lg flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-cloud-arrow-up"></i> Publish Job to Firestore
+            </button>
+          </form>
+        </div>
+
+        <!-- Manage Candidates & Jobs Panel -->
+        <div class="lg:col-span-2 space-y-6">
+          
+          <!-- Candidate Status & Payout Manager -->
+          <div class="bg-slate-900/90 p-5 rounded-2xl border border-slate-800 shadow-xl">
+            <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-list-check text-blue-400"></i> Manage Candidate Status & Payout Approval
+            </h3>
+
+            <div class="overflow-x-auto custom-scrollbar">
+              <table class="w-full text-left text-xs text-slate-300">
+                <thead class="bg-slate-950 text-slate-400 font-semibold uppercase text-[10px] tracking-wider border-b border-slate-800">
+                  <tr>
+                    <th class="px-3 py-2.5">Candidate</th>
+                    <th class="px-3 py-2.5">Referrer Code</th>
+                    <th class="px-3 py-2.5">Pipeline Stage</th>
+                    <th class="px-3 py-2.5">Bonus</th>
+                    <th class="px-3 py-2.5">Payout Action</th>
+                  </tr>
+                </thead>
+                <tbody id="admin-candidates-table-body" class="divide-y divide-slate-800/60">
+                  <tr>
+                    <td colspan="5" class="px-3 py-6 text-center text-slate-500">Loading candidates from database...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Active Jobs List -->
+          <div class="bg-slate-900/90 p-5 rounded-2xl border border-slate-800 shadow-xl">
+            <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-folder-open text-indigo-400"></i> Active Published Roles
+            </h3>
+            <div id="admin-jobs-list" class="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-1">
+              <p class="text-xs text-slate-500 py-4 text-center">Loading job listings...</p>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: SHARE REFERRAL LINK & DIRECT REFERRAL -->
+  <div id="share-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-lg w-full space-y-5 shadow-2xl relative">
+      <button onclick="closeShareModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1">
+        <i class="fa-solid fa-xmark text-base"></i>
+      </button>
+
+      <div>
+        <span class="inline-block px-2.5 py-0.5 bg-blue-500/20 text-blue-300 text-[10px] font-bold rounded-md uppercase tracking-wider mb-1">
+          Unique Job Tracking Link
+        </span>
+        <h3 id="modal-job-title" class="text-lg font-bold text-white">Job Title</h3>
+        <p class="text-xs font-bold text-emerald-400 mt-0.5" id="modal-job-reward">Referral Bonus: $0</p>
+      </div>
+
+      <!-- Shareable Link Input -->
+      <div>
+        <label class="block text-[11px] font-medium text-slate-400 mb-1">Copy Shareable Referral URL</label>
+        <div class="flex items-center gap-2">
+          <input type="text" id="modal-referral-url" class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-blue-300 font-mono focus:outline-none" readonly>
+          <button onclick="copyModalReferralUrl()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg transition shadow-md">
+            <i class="fa-solid fa-copy mr-1"></i> Copy
+          </button>
+        </div>
+      </div>
+
+      <!-- 1-Click Social Sharing -->
+      <div>
+        <label class="block text-[11px] font-medium text-slate-400 mb-2">1-Click Share with Candidates</label>
+        <div class="grid grid-cols-4 gap-2">
+          <button onclick="shareViaSocial('linkedin')" class="p-2 bg-slate-950 border border-slate-800 hover:border-blue-500/50 rounded-xl text-center transition group">
+            <i class="fa-brands fa-linkedin text-blue-400 text-lg group-hover:scale-110 transition-transform"></i>
+            <span class="block text-[10px] text-slate-400 mt-1">LinkedIn</span>
+          </button>
+          <button onclick="shareViaSocial('whatsapp')" class="p-2 bg-slate-950 border border-slate-800 hover:border-emerald-500/50 rounded-xl text-center transition group">
+            <i class="fa-brands fa-whatsapp text-emerald-400 text-lg group-hover:scale-110 transition-transform"></i>
+            <span class="block text-[10px] text-slate-400 mt-1">WhatsApp</span>
+          </button>
+          <button onclick="shareViaSocial('twitter')" class="p-2 bg-slate-950 border border-slate-800 hover:border-sky-500/50 rounded-xl text-center transition group">
+            <i class="fa-brands fa-x-twitter text-sky-400 text-lg group-hover:scale-110 transition-transform"></i>
+            <span class="block text-[10px] text-slate-400 mt-1">X / Twitter</span>
+          </button>
+          <button onclick="shareViaSocial('email')" class="p-2 bg-slate-950 border border-slate-800 hover:border-amber-500/50 rounded-xl text-center transition group">
+            <i class="fa-solid fa-envelope text-amber-400 text-lg group-hover:scale-110 transition-transform"></i>
+            <span class="block text-[10px] text-slate-400 mt-1">Email</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Direct Candidate Submission Form -->
+      <div class="border-t border-slate-800/80 pt-4">
+        <h4 class="text-xs font-bold text-white mb-2 flex items-center gap-1.5">
+          <i class="fa-solid fa-user-plus text-emerald-400"></i> Or Direct Refer a Candidate Now
+        </h4>
+        <form onsubmit="handleCandidateSubmit(event)" class="space-y-2.5">
+          <input type="text" id="modal-cand-name" placeholder="Candidate Full Name" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500" required>
+          <input type="email" id="modal-cand-email" placeholder="Candidate Email Address" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500" required>
+          <button type="submit" id="modal-submit-cand-btn" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg transition shadow-md flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-paper-plane"></i> Submit Candidate & Track Referral
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { 
+      getFirestore, 
+      collection, 
+      doc, 
+      addDoc, 
+      updateDoc, 
+      deleteDoc, 
+      onSnapshot 
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'jobfinder-referral-app';
+
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+      apiKey: "AIzaSyDemoJobFinderApiKey123456789",
+      authDomain: "demo-jobfinder.firebaseapp.com",
+      projectId: "demo-jobfinder",
+      storageBucket: "demo-jobfinder.appspot.com",
+      messagingSenderId: "9876543210",
+      appId: "1:9876543210:web:1234567890abcdef"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentUser = null;
+    let userId = null;
+    let userReferrerCode = '';
+    let globalJobs = [];
+    let globalReferrals = [];
+    let activeModalJob = null;
+
+    window.showToast = function(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      const colors = {
+        success: 'bg-emerald-950/90 border-emerald-500/50 text-emerald-200',
+        error: 'bg-rose-950/90 border-rose-500/50 text-rose-200',
+        info: 'bg-blue-950/90 border-blue-500/50 text-blue-200'
+      };
+
+      const icons = {
+        success: 'fa-circle-check text-emerald-400',
+        error: 'fa-circle-xmark text-rose-400',
+        info: 'fa-circle-info text-blue-400'
+      };
+
+      toast.className = `flex items-center gap-2.5 px-4 py-3 rounded-xl border ${colors[type] || colors.info} backdrop-blur-md shadow-xl text-xs font-medium transition-all duration-300 pointer-events-auto transform translate-y-2 opacity-0`;
+      toast.innerHTML = `<i class="fa-solid ${icons[type] || icons.info} text-sm"></i> <span>${message}</span>`;
+
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 10);
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    };
+
+    async function setupAuthentication() {
+      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+        try {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } catch (err) {
+          console.warn("Custom token sign-in failed, falling back to anonymous auth:", err);
+          await signInAnonymously(auth);
+        }
+      } else {
+        await signInAnonymously(auth);
+      }
+    }
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUser = user;
+        userId = user.uid;
+        userReferrerCode = 'JF-' + userId.substring(0, 6).toUpperCase();
+
+        document.getElementById('user-avatar-initials').innerText = userReferrerCode.substring(3, 5);
+        document.getElementById('user-display-id').innerText = userReferrerCode;
+        document.getElementById('user-ref-code-badge').innerText = userReferrerCode;
+
+        initFirestoreListeners();
+      }
+    });
+
+    function initFirestoreListeners() {
+      if (!currentUser) return;
+
+      // RULE 1: /artifacts/{appId}/public/data/jobs
+      const jobsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'jobs');
+      
+      onSnapshot(jobsColRef, (snapshot) => {
+        if (snapshot.empty) {
+          seedInitialJobs();
+          return;
+        }
+
+        globalJobs = [];
+        snapshot.forEach((docSnap) => {
+          globalJobs.push({ id: docSnap.id, ...docSnap.data() });
+        });
+
+        filterAndRenderJobs();
+        renderAdminJobsList();
+      }, (error) => {
+        console.error("Jobs Snapshot Error:", error);
+        showToast("Error syncing job postings.", "error");
+      });
+
+      // RULE 1: /artifacts/{appId}/public/data/referrals
+      const referralsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'referrals');
+
+      onSnapshot(referralsColRef, (snapshot) => {
+        if (snapshot.empty && globalReferrals.length === 0) {
+          seedInitialReferral();
+          return;
+        }
+
+        globalReferrals = [];
+        snapshot.forEach((docSnap) => {
+          globalReferrals.push({ id: docSnap.id, ...docSnap.data() });
+        });
+
+        renderUserReferrals();
+        renderAdminCandidatesTable();
+      }, (error) => {
+        console.error("Referrals Snapshot Error:", error);
+        showToast("Error syncing referral tracking.", "error");
+      });
+    }
+
+    async function seedInitialJobs() {
+      const defaultJobs = [
+        {
+          title: "Senior AI Prompt & Alignment Specialist",
+          department: "AI & Machine Learning",
+          rate: "$130 - $180 / hr",
+          reward: 2500,
+          targetUrl: "https://jobfinder.com/apply/ai-alignment-lead",
+          description: "Evaluating LLM outputs, RLHF alignment pipelines, and multi-modal benchmark datasets for enterprise AI models.",
+          createdAt: new Date().toISOString()
+        },
+        {
+          title: "Lead Medical & Clinical Data Scientist (MD/PhD)",
+          department: "Medical & Science NLP",
+          rate: "$160 - $220 / hr",
+          reward: 3500,
+          targetUrl: "https://jobfinder.com/apply/medical-data-lead",
+          description: "Validating clinical AI diagnostic safety protocols and domain-specific medical literature understanding.",
+          createdAt: new Date().toISOString()
+        },
+        {
+          title: "Quantitative Systems Engineer (Rust / C++)",
+          department: "FinTech",
+          rate: "$140 - $200 / hr",
+          reward: 2200,
+          targetUrl: "https://jobfinder.com/apply/quant-rust-engineer",
+          description: "Building ultra-low latency market model execution engines in Rust with high-throughput streaming pipelines.",
+          createdAt: new Date().toISOString()
+        },
+        {
+          title: "Principal Product Designer (AI Workflows)",
+          department: "Product & Design",
+          rate: "$110 - $150 / hr",
+          reward: 1800,
+          targetUrl: "https://jobfinder.com/apply/principal-product-designer",
+          description: "Crafting intuitive UX/UI interfaces for complex multi-agent developer tools and automated AI workspaces.",
+          createdAt: new Date().toISOString()
+        }
+      ];
+
+      const jobsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'jobs');
+      for (const job of defaultJobs) {
+        await addDoc(jobsColRef, job);
+      }
+    }
+
+    async function seedInitialReferral() {
+      const referralsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'referrals');
+      await addDoc(referralsColRef, {
+        candidateName: "Dr. Evelyn Vance",
+        candidateEmail: "evelyn.vance@example.com",
+        jobTitle: "Senior AI Prompt & Alignment Specialist",
+        reward: 2500,
+        referrerUid: userId,
+        referrerCode: userReferrerCode,
+        stage: "Interviewing",
+        payoutStatus: "Pending Placement",
+        createdAt: new Date().toISOString()
+      });
+    }
+
+    window.filterAndRenderJobs = function() {
+      const container = document.getElementById('jobs-grid');
+      const searchQuery = document.getElementById('job-search').value.toLowerCase();
+      const selectedDept = document.getElementById('department-filter').value;
+
+      // RULE 2: Filtering in JS Memory
+      let filtered = globalJobs.filter(job => {
+        const matchesSearch = (job.title || '').toLowerCase().includes(searchQuery) || 
+                              (job.description || '').toLowerCase().includes(searchQuery) ||
+                              (job.department || '').toLowerCase().includes(searchQuery);
+        const matchesDept = selectedDept === 'ALL' || job.department === selectedDept;
+        return matchesSearch && matchesDept;
+      });
+
+      document.getElementById('active-jobs-count').innerText = `${filtered.length} Open Roles`;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full py-12 text-center bg-slate-900/40 rounded-2xl border border-slate-800">
+            <i class="fa-solid fa-folder-open text-2xl text-slate-600 mb-2"></i>
+            <p class="text-xs text-slate-400 font-medium">No job postings found matching your search.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(job => `
+        <div class="bg-slate-900/90 rounded-2xl p-5 border border-slate-800 hover:border-blue-500/40 transition-all duration-200 flex flex-col justify-between shadow-lg group">
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <span class="text-[10px] font-bold text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-md border border-blue-500/20 uppercase tracking-wider">
+                ${escapeHtml(job.department)}
+              </span>
+              <span class="text-xs font-extrabold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                +$${job.reward ? Number(job.reward).toLocaleString() : 0} Reward
+              </span>
+            </div>
+            
+            <h3 class="text-base font-bold text-white leading-snug group-hover:text-blue-300 transition-colors mb-2">
+              ${escapeHtml(job.title)}
+            </h3>
+
+            <p class="text-xs text-slate-400 font-medium mb-3 flex items-center gap-1.5">
+              <i class="fa-solid fa-money-bill-wave text-slate-500"></i> ${escapeHtml(job.rate || 'Competitive Rate')}
+            </p>
+
+            <p class="text-slate-300 text-xs leading-relaxed line-clamp-3 mb-5">
+              ${escapeHtml(job.description)}
+            </p>
+          </div>
+
+          <div class="pt-3 border-t border-slate-800/80 flex items-center gap-2">
+            <button onclick="openShareModal('${job.id}')" class="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl transition shadow-md flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-share-nodes"></i> Get Referral Link
+            </button>
+          </div>
+        </div>
+      `).join('');
+    };
+
+    window.renderUserReferrals = function() {
+      const tbody = document.getElementById('referrals-table-body');
+      
+      // RULE 2: Filter by user ID in memory
+      const userReferrals = globalReferrals.filter(r => r.referrerUid === userId);
+
+      let totalEarned = 0;
+      let totalPending = 0;
+      let placementsCount = 0;
+
+      userReferrals.forEach(r => {
+        if (r.payoutStatus === 'Paid Out' || r.stage === 'Hired & Paid') {
+          totalEarned += Number(r.reward || 0);
+          placementsCount++;
+        } else {
+          totalPending += Number(r.reward || 0);
+        }
+      });
+
+      document.getElementById('metric-earned').innerText = `$${totalEarned.toLocaleString()}`;
+      document.getElementById('metric-pending').innerText = `$${totalPending.toLocaleString()}`;
+      document.getElementById('metric-candidates').innerText = userReferrals.length;
+      document.getElementById('metric-placements').innerText = placementsCount;
+      document.getElementById('referrals-count-indicator').innerText = `${userReferrals.length} record(s)`;
+
+      if (userReferrals.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="px-4 py-8 text-center text-slate-500">
+              <p class="text-xs font-medium">No candidates referred under your account code yet.</p>
+              <button onclick="switchTab('jobs')" class="mt-2 text-blue-400 underline text-xs">Browse job opportunities to generate links</button>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = userReferrals.map(r => {
+        const badgeColors = {
+          'Applied': 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+          'Screening': 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+          'Interviewing': 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+          'Hired': 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+          'Hired & Paid': 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+        };
+
+        const formattedDate = r.createdAt ? new Date(r.createdAt).toLocaleDateString() : 'Recent';
+
+        return `
+          <tr class="hover:bg-slate-800/40 transition">
+            <td class="px-4 py-3 font-semibold text-white">${escapeHtml(r.candidateName)}<br><span class="text-[10px] text-slate-500 font-normal">${escapeHtml(r.candidateEmail || '')}</span></td>
+            <td class="px-4 py-3 text-slate-300 font-medium">${escapeHtml(r.jobTitle)}</td>
+            <td class="px-4 py-3">
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badgeColors[r.stage] || 'bg-slate-800 text-slate-300'}">
+                ${escapeHtml(r.stage)}
+              </span>
+            </td>
+            <td class="px-4 py-3 font-bold text-emerald-400">+$${Number(r.reward || 0).toLocaleString()}</td>
+            <td class="px-4 py-3 text-slate-400 font-medium">${escapeHtml(r.payoutStatus || 'Pending Placement')}</td>
+            <td class="px-4 py-3 text-slate-500">${formattedDate}</td>
+          </tr>
+        `;
+      }).join('');
+    };
+
+    window.openShareModal = function(jobId) {
+      activeModalJob = globalJobs.find(j => j.id === jobId);
+      if (!activeModalJob) return;
+
+      const generatedUrl = `${activeModalJob.targetUrl}?ref=${userReferrerCode}`;
+
+      document.getElementById('modal-job-title').innerText = activeModalJob.title;
+      document.getElementById('modal-job-reward').innerText = `Referral Payout Reward: +$${Number(activeModalJob.reward || 0).toLocaleString()} USD`;
+      document.getElementById('modal-referral-url').value = generatedUrl;
+
+      document.getElementById('share-modal').classList.remove('hidden');
+    };
+
+    window.closeShareModal = function() {
+      document.getElementById('share-modal').classList.add('hidden');
+      activeModalJob = null;
+    };
+
+    window.copyModalReferralUrl = function() {
+      const input = document.getElementById('modal-referral-url');
+      input.select();
+      document.execCommand('copy');
+      showToast("Referral link copied to clipboard!", "success");
+    };
+
+    window.copyMainReferralLink = function() {
+      const mainLink = `${window.location.origin}${window.location.pathname}?ref=${userReferrerCode}`;
+      const tempArea = document.createElement('textarea');
+      tempArea.value = mainLink;
+      document.body.appendChild(tempArea);
+      tempArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempArea);
+      showToast("Main JobFinder Platform referral link copied!", "success");
+    };
+
+    window.shareViaSocial = function(platform) {
+      if (!activeModalJob) return;
+
+      const shareUrl = encodeURIComponent(document.getElementById('modal-referral-url').value);
+      const text = encodeURIComponent(`JobFinder is looking for specialists in ${activeModalJob.title}. Check this opening out:`);
+      let redirectUrl = "";
+
+      if (platform === 'linkedin') redirectUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`;
+      if (platform === 'whatsapp') redirectUrl = `https://api.whatsapp.com/send?text=${text}%20${shareUrl}`;
+      if (platform === 'twitter') redirectUrl = `https://twitter.com/intent/tweet?text=${text}&url=${shareUrl}`;
+      if (platform === 'email') redirectUrl = `mailto:?subject=${encodeURIComponent(activeModalJob.title)}&body=${text}%20${shareUrl}`;
+
+      window.open(redirectUrl, '_blank');
+    };
+
+    window.handleCandidateSubmit = async function(e) {
+      e.preventDefault();
+      if (!activeModalJob || !currentUser) return;
+
+      const btn = document.getElementById('modal-submit-cand-btn');
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Submitting...`;
+
+      try {
+        const name = document.getElementById('modal-cand-name').value;
+        const email = document.getElementById('modal-cand-email').value;
+
+        // RULE 1: Strict path
+        const referralsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'referrals');
+
+        await addDoc(referralsColRef, {
+          candidateName: name,
+          candidateEmail: email,
+          jobId: activeModalJob.id,
+          jobTitle: activeModalJob.title,
+          reward: Number(activeModalJob.reward || 0),
+          referrerUid: userId,
+          referrerCode: userReferrerCode,
+          stage: "Applied",
+          payoutStatus: "Pending Placement",
+          createdAt: new Date().toISOString()
+        });
+
+        showToast(`Candidate ${name} registered under your referral ID!`, "success");
+        closeShareModal();
+        document.getElementById('modal-cand-name').value = '';
+        document.getElementById('modal-cand-email').value = '';
+      } catch (error) {
+        console.error("Candidate submission error:", error);
+        showToast("Failed to register candidate referral.", "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Submit Candidate & Track Referral`;
+      }
+    };
+
+    window.handleJobCreation = async function(e) {
+      e.preventDefault();
+      if (!currentUser) return;
+
+      const btn = document.getElementById('admin-submit-btn');
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Publishing...`;
+
+      try {
+        const title = document.getElementById('admin-job-title').value;
+        const department = document.getElementById('admin-job-dept').value;
+        const rate = document.getElementById('admin-job-rate').value;
+        const reward = Number(document.getElementById('admin-job-reward').value);
+        const targetUrl = document.getElementById('admin-job-url').value;
+        const description = document.getElementById('admin-job-desc').value;
+
+        // RULE 1: Strict path
+        const jobsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'jobs');
+
+        await addDoc(jobsColRef, {
+          title,
+          department,
+          rate,
+          reward,
+          targetUrl,
+          description,
+          createdAt: new Date().toISOString()
+        });
+
+        showToast("New job posting published to Firestore!", "success");
+        document.getElementById('create-job-form').reset();
+      } catch (err) {
+        console.error("Job Creation Error:", err);
+        showToast("Error publishing job posting.", "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Publish Job to Firestore`;
+      }
+    };
+
+    window.renderAdminJobsList = function() {
+      const container = document.getElementById('admin-jobs-list');
+      if (globalJobs.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-500 py-3 text-center">No active job listings in Firestore.</p>`;
+        return;
+      }
+
+      container.innerHTML = globalJobs.map(job => `
+        <div class="flex items-center justify-between bg-slate-950 p-2.5 rounded-lg border border-slate-800 text-xs">
+          <div>
+            <p class="font-bold text-white">${escapeHtml(job.title)}</p>
+            <p class="text-[10px] text-slate-400">${escapeHtml(job.department)} • Reward: <span class="text-emerald-400 font-bold">+$${job.reward ? Number(job.reward).toLocaleString() : 0}</span></p>
+          </div>
+          <button onclick="deleteJobFromDb('${job.id}')" class="text-rose-400 hover:text-rose-300 p-1.5 rounded-lg hover:bg-rose-500/10 transition">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
+      `).join('');
+    };
+
+    window.deleteJobFromDb = async function(jobId) {
+      if (!currentUser) return;
+      try {
+        const jobDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'jobs', jobId);
+        await deleteDoc(jobDocRef);
+        showToast("Job removed from Firestore.", "info");
+      } catch (err) {
+        console.error("Delete job error:", err);
+        showToast("Error deleting job posting.", "error");
+      }
+    };
+
+    window.renderAdminCandidatesTable = function() {
+      const tbody = document.getElementById('admin-candidates-table-body');
+      if (globalReferrals.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="px-3 py-6 text-center text-slate-500">No candidate referrals in database.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = globalReferrals.map(r => `
+        <tr class="hover:bg-slate-800/40 transition">
+          <td class="px-3 py-2 text-xs font-bold text-white">
+            ${escapeHtml(r.candidateName)}<br/>
+            <span class="text-[10px] text-slate-400 font-normal">${escapeHtml(r.jobTitle)}</span>
+          </td>
+          <td class="px-3 py-2 text-xs text-blue-300 font-mono">${escapeHtml(r.referrerCode || 'N/A')}</td>
+          <td class="px-3 py-2 text-xs">
+            <select onchange="updateCandidateStageInDb('${r.id}', this.value)" class="bg-slate-950 border border-slate-800 text-amber-300 rounded px-2 py-1 text-[11px] focus:outline-none">
+              <option value="Applied" ${r.stage === 'Applied' ? 'selected' : ''}>Applied</option>
+              <option value="Screening" ${r.stage === 'Screening' ? 'selected' : ''}>Screening</option>
+              <option value="Interviewing" ${r.stage === 'Interviewing' ? 'selected' : ''}>Interviewing</option>
+              <option value="Hired" ${r.stage === 'Hired' ? 'selected' : ''}>Hired</option>
+              <option value="Hired & Paid" ${r.stage === 'Hired & Paid' ? 'selected' : ''}>Hired & Paid</option>
+            </select>
+          </td>
+          <td class="px-3 py-2 text-xs text-emerald-400 font-bold">$${Number(r.reward || 0).toLocaleString()}</td>
+          <td class="px-3 py-2 text-xs">
+            ${r.payoutStatus === 'Paid Out' ? 
+              `<span class="text-[10px] text-emerald-400 font-bold"><i class="fa-solid fa-check-double"></i> Paid Out</span>` :
+              `<button onclick="approveCandidatePayout('${r.id}')" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded text-[10px] transition shadow">
+                Approve Payout
+              </button>`
+            }
+          </td>
+        </tr>
+      `).join('');
+    };
+
+    window.updateCandidateStageInDb = async function(refId, newStage) {
+      if (!currentUser) return;
+      try {
+        const refDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'referrals', refId);
+        const payoutStatus = (newStage === 'Hired & Paid') ? 'Paid Out' : 'Pending Placement';
+        await updateDoc(refDocRef, { stage: newStage, payoutStatus });
+        showToast(`Candidate stage updated to ${newStage}`, "success");
+      } catch (err) {
+        console.error("Update stage error:", err);
+        showToast("Error updating candidate status.", "error");
+      }
+    };
+
+    window.approveCandidatePayout = async function(refId) {
+      if (!currentUser) return;
+      try {
+        const refDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'referrals', refId);
+        await updateDoc(refDocRef, { stage: 'Hired & Paid', payoutStatus: 'Paid Out' });
+        showToast("Payout Approved & Processed!", "success");
+      } catch (err) {
+        console.error("Approve payout error:", err);
+        showToast("Error approving payout.", "error");
+      }
+    };
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    window.switchTab = function(tab) {
+      document.getElementById('tab-jobs').classList.add('hidden');
+      document.getElementById('tab-referrals').classList.add('hidden');
+      document.getElementById('tab-admin').classList.add('hidden');
+
+      const activeDesktop = "px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-blue-600 text-white shadow-md";
+      const inactiveDesktop = "px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all duration-200";
+
+      document.getElementById('nav-jobs').className = inactiveDesktop;
+      document.getElementById('nav-referrals').className = inactiveDesktop;
+      document.getElementById('nav-admin').className = "px-4 py-1.5 rounded-lg text-xs font-semibold text-amber-400 border border-amber-500/30 hover:bg-amber-500/10 transition-all duration-200";
+
+      document.getElementById('mob-nav-jobs').className = "flex flex-col items-center p-1 text-xs text-slate-400 font-medium";
+      document.getElementById('mob-nav-referrals').className = "flex flex-col items-center p-1 text-xs text-slate-400 font-medium";
+      document.getElementById('mob-nav-admin').className = "flex flex-col items-center p-1 text-xs text-amber-400 font-medium";
+
+      if (tab === 'jobs') {
+        document.getElementById('tab-jobs').classList.remove('hidden');
+        document.getElementById('nav-jobs').className = activeDesktop;
+        document.getElementById('mob-nav-jobs').className = "flex flex-col items-center p-1 text-xs text-blue-400 font-bold";
+      } else if (tab === 'referrals') {
+        document.getElementById('tab-referrals').classList.remove('hidden');
+        document.getElementById('nav-referrals').className = activeDesktop;
+        document.getElementById('mob-nav-referrals').className = "flex flex-col items-center p-1 text-xs text-blue-400 font-bold";
+        renderUserReferrals();
+      } else if (tab === 'admin') {
+        document.getElementById('tab-admin').classList.remove('hidden');
+        document.getElementById('nav-admin').className = "px-4 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-slate-950 font-bold shadow-md";
+        document.getElementById('mob-nav-admin').className = "flex flex-col items-center p-1 text-xs text-amber-300 font-bold";
+        renderAdminJobsList();
+        renderAdminCandidatesTable();
+      }
+    };
+
+    // Execute authentication setup
+    setupAuthentication();
+  </script>
+</body>
+</html>
